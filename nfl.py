@@ -5,6 +5,7 @@ import json
 from prettytable import PrettyTable
 from datetime import datetime
 import pytz
+import argparse
 
 # Función para obtener los datos de la API
 def obtener_datos(fecha):
@@ -50,7 +51,6 @@ def imprimir_marcadores(datos):
                     score = team.get('score', '0')
                     tabla.add_row([team_name, score, hora_edt, hora_cst])
                 
-                # Añadir una línea de división después de cada partido, excepto el último
                 if event != events[-1]:
                     tabla.add_row(["-"*10, "-"*10, "-"*10, "-"*10])
         
@@ -64,12 +64,28 @@ def validar_fecha(fecha):
     except ValueError:
         return False
 
-# Pedir la fecha de consulta de forma interactiva
-fecha_consulta = input("Introduce la fecha de consulta (formato YYYYMMDD): ")
+# Configuración de argumentos de línea de comandos
+parser = argparse.ArgumentParser(description="Obtener marcadores de la NFL.")
+parser.add_argument("-d", "--date", type=str, help="Fecha de consulta en formato YYYYMMDD")
+parser.add_argument("-t", "--today", action="store_true", help="Usar la fecha de hoy")
 
-# Validar la fecha de entrada
-if validar_fecha(fecha_consulta):
-    datos = obtener_datos(fecha_consulta)
-    imprimir_marcadores(datos)
+args = parser.parse_args()
+
+# Determinar la fecha de consulta
+if args.today:
+    fecha_consulta = datetime.now().strftime("%Y%m%d")
+elif args.date:
+    if validar_fecha(args.date):
+        fecha_consulta = args.date
+    else:
+        print("Fecha inválida. Por favor, introduce una fecha en el formato YYYYMMDD.")
+        exit(1)
 else:
-    print("Fecha inválida. Por favor, introduce una fecha en el formato YYYYMMDD.")
+    fecha_consulta = input("Introduce la fecha de consulta (formato YYYYMMDD): ")
+    if not validar_fecha(fecha_consulta):
+        print("Fecha inválida. Por favor, introduce una fecha en el formato YYYYMMDD.")
+        exit(1)
+
+# Obtener los datos y imprimir los marcadores
+datos = obtener_datos(fecha_consulta)
+imprimir_marcadores(datos)
